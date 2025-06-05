@@ -92,19 +92,23 @@ export function Table(props: TableProps) {
   const [tableBody, setTableBody] = useState(props.body);
   const [sortColumnIndex, setSortColumnIndex] = useState(0);
   const [filterColumn, setFilterColumn] = useState({ index: 0, values: [] as (string | number)[] });
-  const columnCounts = props.body[0]
-    .map((_, colIdx) =>
-      props.body
-        .map((row) => row[colIdx])
-        .reduce((accumlator: { data: string | number; count: number }[][], current) => {
-          if (!accumlator[colIdx]) accumlator[colIdx] = [];
-          if (!accumlator[colIdx].map((v) => v.data).includes(current))
-            accumlator[colIdx].push({ data: current, count: 0 });
-          accumlator[colIdx][accumlator[colIdx].map((v) => v.data).indexOf(current)].count += 1;
-          return accumlator;
-        }, []),
-    )
-    .map((col, i) => col[i].sort((a, b) => b.count - a.count));
+  const columnCounts =
+    props.body.length === 0
+      ? []
+      : props.body[0]
+          .map((_, colIdx) =>
+            props.body
+              .map((row) => row[colIdx])
+              .reduce((accumlator: { data: string | number; count: number }[][], current) => {
+                if (!accumlator[colIdx]) accumlator[colIdx] = [];
+                if (!accumlator[colIdx].map((v) => v.data).includes(current))
+                  accumlator[colIdx].push({ data: current, count: 0 });
+                accumlator[colIdx][accumlator[colIdx].map((v) => v.data).indexOf(current)].count +=
+                  1;
+                return accumlator;
+              }, []),
+          )
+          .map((col, i) => col[i].sort((a, b) => b.count - a.count));
 
   const onFilterChanged = (index: number, newState: boolean, value?: string | number) => {
     if (!value) {
@@ -138,48 +142,52 @@ export function Table(props: TableProps) {
 
   return (
     <div className="relative h-full w-full overflow-scroll rounded-lg border-2 border-primary bg-surface">
-      <table className="border-separate border-spacing-0 whitespace-nowrap break-keep border-separator">
-        <thead className="sticky top-0 bg-surface">
-          <tr>
-            {props.header.map((v, i) => (
-              <TableHead
-                key={`${i}-${v}`}
-                text={v.toString()}
-                columnValues={columnCounts[i].map((v) => v.data)}
-                sortedWith={sortColumnIndex === i}
-                onSortClick={() => setSortColumnIndex(i)}
-                filteredWith={filterColumn.index === i}
-                filteredValues={filterColumn.index === i ? filterColumn.values : undefined}
-                onFilterChanged={(s, v) => onFilterChanged(i, s, v)}
-              />
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {tableBody.map((row, i) => (
-            <tr className="even:bg-separator hover:font-bold" key={`${i}-${row[0]}`}>
-              {row.map((v, j) => (
-                <td
-                  className={`border-r-2 border-separator px-4 py-2 last:border-r-0 ${!Number.isNaN(Number(v)) ? "text-end" : "text-start"} ${v.toString().match(/[\n|\r]/) ? "whitespace-break-spaces" : ""}`}
-                  key={`${j}-${v}`}
-                >
-                  {v}
-                </td>
+      {props.body.length === 0 ? (
+        <div className="p-4 text-center">直近1週間のデータがありません</div>
+      ) : (
+        <table className="border-separate border-spacing-0 whitespace-nowrap break-keep border-separator">
+          <thead className="sticky top-0 bg-surface">
+            <tr>
+              {props.header.map((v, i) => (
+                <TableHead
+                  key={`${i}-${v}`}
+                  text={v.toString()}
+                  columnValues={columnCounts[i].map((v) => v.data)}
+                  sortedWith={sortColumnIndex === i}
+                  onSortClick={() => setSortColumnIndex(i)}
+                  filteredWith={filterColumn.index === i}
+                  filteredValues={filterColumn.index === i ? filterColumn.values : undefined}
+                  onFilterChanged={(s, v) => onFilterChanged(i, s, v)}
+                />
               ))}
             </tr>
-          ))}
-        </tbody>
-        <tfoot className="font-bold">
-          <tr>
-            <th className="border-r-2 border-t-2 border-primary px-4 py-2" scope="row">
-              行数
-            </th>
-            <td className="border-r-2 border-t-2 border-primary px-4 py-2 text-right">
-              {tableBody.length}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+          </thead>
+          <tbody>
+            {tableBody.map((row, i) => (
+              <tr className="even:bg-separator hover:font-bold" key={`${i}-${row[0]}`}>
+                {row.map((v, j) => (
+                  <td
+                    className={`border-r-2 border-separator px-4 py-2 last:border-r-0 ${!Number.isNaN(Number(v)) ? "text-end" : "text-start"} ${v.toString().match(/[\n|\r]/) ? "whitespace-break-spaces" : ""}`}
+                    key={`${j}-${v}`}
+                  >
+                    {v}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="font-bold">
+            <tr>
+              <th className="border-r-2 border-t-2 border-primary px-4 py-2" scope="row">
+                行数
+              </th>
+              <td className="border-r-2 border-t-2 border-primary px-4 py-2 text-right">
+                {tableBody.length}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      )}
     </div>
   );
 }
